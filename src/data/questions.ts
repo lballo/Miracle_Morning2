@@ -85,9 +85,9 @@ export const WELCOME_MANTRAS: string[] = [
   "Chaque matin est une invitation à commencer avec douceur.",
   "Je m'aime et je m'accepte comme je suis.",
   "J'ai le droit et je mérite de prendre du temps pour moi.",
-  "Je prends ma place et je m'autorise à être." 
-  "Je reviens à l'essentiel, à ma vérité intérieure"
-  "Prendre du temps pour soi est un acte d'amour"
-  "J'ai le droit de m'apporter de la douceur et de me faire du bien"
-  "Chaque jour, je mets en place une routine qui m'aide à avancer vers ce que je désire vraiment."
+  "Je prends ma place et je m'autorise à être.",
+  "Je reviens à l'essentiel, à ma vérité intérieure",
+  "Prendre du temps pour soi est un acte d'amour",
+  "J'ai le droit de m'apporter de la douceur et de me faire du bien",
+  "Chaque jour, je mets en place une routine qui m'aide à avancer vers ce que je désire vraiment.",
 ];
