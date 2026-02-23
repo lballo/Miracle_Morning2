@@ -4,6 +4,13 @@ import { ArrowLeft, ArrowRight, Pause, Play, Check } from 'lucide-react';
 import { useApp, useMantrasByTag, useQualitiesByTag } from '../context/AppContext';
 import { Routine, Tag } from '../types';
 
+// ─── Gong helper ──────────────────────────────────────────────────────────────
+function playGong(volume: number = 0.7) {
+  const audio = new Audio('/sounds/transition-gong.mp3');
+  audio.volume = volume;
+  audio.play().catch(() => {});
+}
+
 // ─── Timer (isActive contrôlé depuis le parent) ───────────────────────────────
 function Timer({ durationMinutes, isActive, onComplete }: {
   durationMinutes: number; isActive: boolean; onComplete: () => void;
@@ -119,14 +126,18 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
   const isLast = exerciseIdx === exercises.length - 1;
 
   const handleComplete = useCallback(() => {
+    playGong(1.0); // fin de routine — volume plein
     dispatch({ type: 'COMPLETE_ROUTINE', payload: { durationMinutes: routine.durationMinutes } });
     setCompleted(true);
-    // Ne PAS appeler onComplete() ici — on reste dans l'overlay pour afficher le résumé
   }, [dispatch, routine.durationMinutes]);
 
   const goNext = () => {
     if (isLast) handleComplete();
-    else { setExerciseIdx(i => i + 1); setIsActive(true); }
+    else {
+      playGong(0.5); // transition entre exercices — volume doux
+      setExerciseIdx(i => i + 1);
+      setIsActive(true);
+    }
   };
   const goPrev = () => {
     if (exerciseIdx > 0) { setExerciseIdx(i => i - 1); setIsActive(true); }
