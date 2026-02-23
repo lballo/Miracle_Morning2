@@ -45,6 +45,30 @@ function WritingModal({ question, type, onSave, onClose }: {
   );
 }
 
+function ReadEntryModal({ entry, onClose }: { entry: JournalEntry; onClose: () => void }) {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex flex-col bg-midnight">
+      <div className="flex items-center justify-between px-6 pt-12 pb-4 border-b border-white/5">
+        <button onClick={onClose} className="p-2 rounded-full text-muted hover:text-offwhite"><X size={20} /></button>
+        <p className="text-xs text-lavender/70 uppercase tracking-widest font-medium">
+          {entry.type === 'morning' ? '🌅 Question matinale' : '🌙 Question du soir'}
+        </p>
+        <div className="w-9" />
+      </div>
+      {entry.question && (
+        <div className="px-6 py-5 border-b border-white/5 bg-lavender/5">
+          <p className="text-lg font-serif text-offwhite leading-relaxed italic">"{entry.question}"</p>
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-10">
+        <p className="text-xs text-muted mb-4">{formatDate(entry.date)}</p>
+        <p className="text-offwhite text-base leading-relaxed whitespace-pre-line">{entry.text}</p>
+      </div>
+    </motion.div>
+  );
+}
+
 function QuestionCard({ type, tag, onWrite }: { type: 'morning' | 'evening'; tag: Tag | null; onWrite: (q: string) => void }) {
   const questions = type === 'morning' ? (tag ? MORNING_QUESTIONS[tag] : MORNING_QUESTIONS['Présence']) : EVENING_QUESTIONS;
   const [qIdx, setQIdx] = useState(0);
@@ -78,6 +102,7 @@ export function Journal() {
   const { dailySession, journalEntries } = state;
   const tag = dailySession.tag;
   const [writingFor, setWritingFor] = useState<{ question: string; type: 'morning' | 'evening' } | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
 
   const handleSave = (text: string, type: 'morning' | 'evening', question: string) => {
     dispatch({ type: 'ADD_JOURNAL_ENTRY', payload: { id: `j-${Date.now()}`, date: new Date().toISOString(), text, type, tag: tag || undefined, question } });
@@ -103,7 +128,8 @@ export function Journal() {
             <h4 className="text-xs font-medium text-muted mb-4 uppercase tracking-wider">Récemment</h4>
             <div className="space-y-4">
               {journalEntries.slice(0, 10).map(entry => (
-                <div key={entry.id} className="bg-charcoal/40 border border-white/5 rounded-2xl p-5">
+                <div key={entry.id} onClick={() => setSelectedEntry(entry)}
+                  className="bg-charcoal/40 border border-white/5 rounded-2xl p-5 cursor-pointer hover:border-lavender/20 transition-all">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs text-lavender/80 font-medium">{formatDate(entry.date)}</span>
                     <div className="flex gap-1">
@@ -128,6 +154,9 @@ export function Journal() {
           <WritingModal question={writingFor.question} type={writingFor.type}
             onSave={text => handleSave(text, writingFor.type, writingFor.question)}
             onClose={() => setWritingFor(null)} />
+        )}
+        {selectedEntry && (
+          <ReadEntryModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
         )}
       </AnimatePresence>
     </div>
