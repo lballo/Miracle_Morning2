@@ -120,20 +120,25 @@ function AppInner() {
   return (
     <div className="min-h-screen w-full bg-black flex items-center justify-center p-0 md:p-8 font-sans text-offwhite">
       <div className="w-full max-w-sm h-[100vh] md:h-[844px] bg-midnight relative overflow-hidden shadow-2xl md:rounded-[3rem] border-0 md:border-8 border-charcoal flex flex-col">
-        <AnimatePresence>
-          {!splashDone && <SplashScreen onDismiss={() => setSplashDone(true)} />}
+        <AnimatePresence mode="wait">
+          {!splashDone ? (
+            <SplashScreen key="splash" onDismiss={() => setSplashDone(true)} />
+          ) : (
+            <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className="flex flex-col h-full">
+              <Layout activeTab={activeTab} onTabChange={handleTabChange}>
+                <AnimatePresence>
+                  <InstallBanner />
+                </AnimatePresence>
+                {activeTab === 'home' && <Home key={homeKey} onNavigate={(tab) => handleTabChange(tab as Tab)} onStartRoutine={startRoutine} />}
+                {activeTab === 'routines' && <Routines onPlayRoutine={startRoutineById} />}
+                {activeTab === 'journal' && <Journal />}
+                {activeTab === 'wakeup' && <WakeUp onNavigate={(tab) => handleTabChange(tab as Tab)} onStartRoutineById={startRoutineById} />}
+                {activeTab === 'affirmations' && <Affirmations />}
+                {activeTab === 'profile' && <Profile onNavigate={(tab) => handleTabChange(tab as Tab)} />}
+              </Layout>
+            </motion.div>
+          )}
         </AnimatePresence>
-        <Layout activeTab={activeTab} onTabChange={handleTabChange}>
-          <AnimatePresence>
-            <InstallBanner />
-          </AnimatePresence>
-          {activeTab === 'home' && <Home key={homeKey} onNavigate={(tab) => handleTabChange(tab as Tab)} onStartRoutine={startRoutine} />}
-          {activeTab === 'routines' && <Routines onPlayRoutine={startRoutineById} />}
-          {activeTab === 'journal' && <Journal />}
-          {activeTab === 'wakeup' && <WakeUp onNavigate={(tab) => handleTabChange(tab as Tab)} onStartRoutineById={startRoutineById} />}
-          {activeTab === 'affirmations' && <Affirmations />}
-          {activeTab === 'profile' && <Profile onNavigate={(tab) => handleTabChange(tab as Tab)} />}
-        </Layout>
       </div>
     </div>
   );
