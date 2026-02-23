@@ -126,15 +126,16 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
   const isLast = exerciseIdx === exercises.length - 1;
 
   const handleComplete = useCallback(() => {
-    playGong(1.0); // fin de routine — volume plein
+    playGong(1.0);
+    setTimeout(() => playGong(1.0), 2500); // second gong après 2,5s
     dispatch({ type: 'COMPLETE_ROUTINE', payload: { durationMinutes: routine.durationMinutes } });
     setCompleted(true);
   }, [dispatch, routine.durationMinutes]);
 
-  const goNext = () => {
+  const goNext = (fromTimer = false) => {
     if (isLast) handleComplete();
     else {
-      playGong(0.5); // transition entre exercices — volume doux
+      if (fromTimer) playGong(0.5); // gong uniquement si fin naturelle du timer
       setExerciseIdx(i => i + 1);
       setIsActive(true);
     }
@@ -184,7 +185,7 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
 
       {/* Timer — figé */}
       <div className="flex justify-center py-4 flex-shrink-0">
-        <Timer key={exercise.id} durationMinutes={exercise.durationMinutes || 1} isActive={isActive} onComplete={goNext} />
+        <Timer key={exercise.id} durationMinutes={exercise.durationMinutes || 1} isActive={isActive} onComplete={() => goNext(true)} />
       </div>
 
       {/* Description — scrollable uniquement */}
@@ -200,7 +201,7 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
             ) : (
               exercise.description ? (
                 <div className="bg-charcoal/30 border border-white/5 rounded-2xl p-5">
-                  <p className="text-offwhite/80 text-sm leading-relaxed whitespace-pre-line">{exercise.description}</p>
+                  <p className="text-offwhite/80 text-base leading-relaxed whitespace-pre-line">{exercise.description}</p>
                 </div>
               ) : null
             )}
