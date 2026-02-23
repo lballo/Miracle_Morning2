@@ -1,14 +1,93 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Pause, Play, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Pause, Play, Check, Volume2, VolumeX } from 'lucide-react';
 import { useApp, useMantrasByTag, useQualitiesByTag } from '../context/AppContext';
 import { Routine, Tag } from '../types';
+
+// ─── Mapping exercice → fichier audio ────────────────────────────────────────
+const EXERCISE_MUSIC: Record<string, string> = {
+  'rp-1':  '/sounds/son-bineural.mp3',   // Méditation d'Ancrage
+  'rp-3':  '/sounds/enracinement.mp3',   // Le Chêne
+  'rs-2':  '/sounds/douce.mp3',          // Ma Sécurité Intérieure
+  're-6':  '/sounds/dynamique.mp3',      // Mes Désirs Profonds
+  'rem-2': '/sounds/douce.mp3',          // Accueillir l'Émotion
+  'rf-1':  '/sounds/son-bineural2.mp3',  // Méditation de Centrage
+};
+
+const FADE_IN_DURATION  = 3000; // ms
+const FADE_OUT_DURATION = 2500; // ms
 
 // ─── Gong helper ──────────────────────────────────────────────────────────────
 function playGong(volume: number = 0.7) {
   const audio = new Audio('/sounds/transition-gong.mp3');
   audio.volume = volume;
   audio.play().catch(() => {});
+}
+
+// ─── Hook musique de fond ─────────────────────────────────────────────────────
+function useBgMusic(exerciseId: string, targetVolume: number) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeRef  = useRef<number | null>(null);
+
+  const clearFade = () => { if (fadeRef.current) { clearInterval(fadeRef.current); fadeRef.current = null; } };
+
+  const fadeIn = (audio: HTMLAudioElement) => {
+    audio.volume = 0;
+    audio.play().catch(() => {});
+    const steps = 30;
+    const interval = FADE_IN_DURATION / steps;
+    let step = 0;
+    clearFade();
+    fadeRef.current = window.setInterval(() => {
+      step++;
+      audio.volume = Math.min(targetVolume, (step / steps) * targetVolume);
+      if (step >= steps) clearFade();
+    }, interval);
+  };
+
+  const fadeOut = (audio: HTMLAudioElement, onDone?: () => void) => {
+    const startVol = audio.volume;
+    const steps = 25;
+    const interval = FADE_OUT_DURATION / steps;
+    let step = 0;
+    clearFade();
+    fadeRef.current = window.setInterval(() => {
+      step++;
+      audio.volume = Math.max(0, startVol * (1 - step / steps));
+      if (step >= steps) { clearFade(); audio.pause(); audio.currentTime = 0; onDone?.(); }
+    }, interval);
+  };
+
+  // Changer la musique quand l'exercice change
+  useEffect(() => {
+    const src = EXERCISE_MUSIC[exerciseId];
+    // Fade out l'ancien
+    if (audioRef.current) {
+      const old = audioRef.current;
+      fadeOut(old);
+      audioRef.current = null;
+    }
+    if (!src) return;
+    // Fade in le nouveau
+    const audio = new Audio(src);
+    audio.loop = true;
+    audioRef.current = audio;
+    fadeIn(audio);
+    return () => { clearFade(); audio.pause(); };
+  }, [exerciseId]);
+
+  // Ajuster le volume cible en temps réel
+  useEffect(() => {
+    if (audioRef.current && !fadeRef.current) {
+      audioRef.current.volume = targetVolume;
+    }
+  }, [targetVolume]);
+
+  const stopNow = useCallback(() => {
+    if (audioRef.current) { fadeOut(audioRef.current); audioRef.current = null; }
+  }, []);
+
+  return { stopNow };
 }
 
 // ─── Timer (isActive contrôlé depuis le parent) ───────────────────────────────
@@ -120,22 +199,28 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
   const [exerciseIdx, setExerciseIdx] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [volume, setVolume] = useState(0.3);
+  const [showVolume, setShowVolume] = useState(false);
 
   const exercises = routine.exercises;
   const exercise = exercises[exerciseIdx];
   const isLast = exerciseIdx === exercises.length - 1;
+  const hasBgMusic = !!EXERCISE_MUSIC[exercise.id];
+
+  const { stopNow } = useBgMusic(exercise.id, volume);
 
   const handleComplete = useCallback(() => {
+    stopNow();
     playGong(1.0);
-    setTimeout(() => playGong(1.0), 2500); // second gong après 2,5s
+    setTimeout(() => playGong(1.0), 2500);
     dispatch({ type: 'COMPLETE_ROUTINE', payload: { durationMinutes: routine.durationMinutes } });
     setCompleted(true);
-  }, [dispatch, routine.durationMinutes]);
+  }, [dispatch, routine.durationMinutes, stopNow]);
 
   const goNext = (fromTimer = false) => {
     if (isLast) handleComplete();
     else {
-      if (fromTimer) playGong(0.5); // gong uniquement si fin naturelle du timer
+      if (fromTimer) playGong(0.5);
       setExerciseIdx(i => i + 1);
       setIsActive(true);
     }
@@ -144,7 +229,6 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
     if (exerciseIdx > 0) { setExerciseIdx(i => i - 1); setIsActive(true); }
   };
 
-  // Écran final — les boutons appellent onComplete() pour sortir de l'overlay, puis naviguent
   if (completed) {
     return (
       <RoutineSummary
@@ -163,14 +247,45 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
           <p className="text-xs text-lavender/60 uppercase tracking-widest font-medium">{routine.title}</p>
           <p className="text-xs text-muted">{exerciseIdx + 1} / {exercises.length}</p>
         </div>
-        <div className="flex gap-1">
-          {exercises.map((_, i) => (
-            <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i < exerciseIdx ? 'bg-lavender w-4' : i === exerciseIdx ? 'bg-lavender/80 w-5' : 'bg-white/10 w-3'}`} />
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Bouton volume — visible uniquement si musique active */}
+          {hasBgMusic && (
+            <div className="relative">
+              <button
+                onClick={() => setShowVolume(v => !v)}
+                className={`p-2 rounded-full transition-all ${showVolume ? 'bg-lavender/20 text-lavender' : 'text-muted/40 hover:text-muted'}`}
+              >
+                {volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+              <AnimatePresence>
+                {showVolume && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-10 bg-charcoal border border-white/10 rounded-2xl px-4 py-3 z-10 shadow-xl"
+                  >
+                    <input
+                      type="range" min={0} max={1} step={0.05}
+                      value={volume}
+                      onChange={e => setVolume(parseFloat(e.target.value))}
+                      className="w-24 accent-lavender cursor-pointer"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+          <div className="flex gap-1">
+            {exercises.map((_, i) => (
+              <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i < exerciseIdx ? 'bg-lavender w-4' : i === exerciseIdx ? 'bg-lavender/80 w-5' : 'bg-white/10 w-3'}`} />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Titre + sous-titre de l'exercice — figés */}
+      {/* Titre + sous-titre de l'exercice */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`header-${exercise.id}`}
@@ -183,12 +298,12 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
         </motion.div>
       </AnimatePresence>
 
-      {/* Timer — figé */}
+      {/* Timer */}
       <div className="flex justify-center py-4 flex-shrink-0">
         <Timer key={exercise.id} durationMinutes={exercise.durationMinutes || 1} isActive={isActive} onComplete={() => goNext(true)} />
       </div>
 
-      {/* Description — scrollable uniquement */}
+      {/* Description scrollable */}
       <div className="flex-1 overflow-y-auto px-6 pb-2">
         <AnimatePresence mode="wait">
           <motion.div
@@ -201,7 +316,7 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
             ) : (
               exercise.description ? (
                 <div className="bg-charcoal/30 border border-white/5 rounded-2xl p-5">
-                  <p className="text-offwhite/80 text-base leading-relaxed whitespace-pre-line">{exercise.description}</p>
+                  <p className="text-offwhite/80 text-sm leading-relaxed whitespace-pre-line">{exercise.description}</p>
                 </div>
               ) : null
             )}
@@ -209,7 +324,7 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
         </AnimatePresence>
       </div>
 
-      {/* Footer figé — ← pause → */}
+      {/* Footer — ← pause → */}
       <div className="flex-shrink-0 border-t border-white/5 px-8 py-4 bg-midnight/80 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <button
@@ -219,14 +334,12 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
           >
             <ArrowLeft size={20} />
           </button>
-
           <button
             onClick={() => setIsActive(a => !a)}
             className="w-14 h-14 rounded-full bg-lavender text-midnight flex items-center justify-center hover:bg-white transition-colors shadow-glow"
           >
             {isActive ? <Pause fill="currentColor" size={20} /> : <Play fill="currentColor" className="ml-0.5" size={20} />}
           </button>
-
           <button
             onClick={() => goNext()}
             className="w-12 h-12 rounded-full bg-lavender/20 border border-lavender/30 text-lavender flex items-center justify-center hover:bg-lavender hover:text-midnight transition-all"
