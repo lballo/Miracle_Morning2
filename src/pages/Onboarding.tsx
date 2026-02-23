@@ -5,8 +5,7 @@ import { Gender, User } from '../types';
 
 type OnboardStep = 'welcome' | 'explain1' | 'mantra' | 'explain2' | 'profile';
 
-const ONBOARDING_MANTRA =
-  'Je reviens à l\'essentiel. Je ne cherche plus à être, je suis. J\'incarne ma présence.';
+const ONBOARDING_MANTRA = 'Prendre soin de soi est un acte quotidien';
 
 function Particles() {
   return (
@@ -74,7 +73,7 @@ function Explain1({ onNext }: { onNext: () => void }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
-        <div className="text-6xl mb-10">🌅</div>
+        <div className="mb-10" />
         <h2 className="text-3xl font-serif text-white mb-6 leading-tight">
           Ta routine,<br />ton sanctuaire
         </h2>
@@ -95,7 +94,7 @@ function Explain1({ onNext }: { onNext: () => void }) {
 // ─── Screen 3: Mantra (auto-advance after 4s) ─────────────────────────────────
 function MantraScreen({ onNext }: { onNext: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onNext, 4500);
+    const t = setTimeout(onNext, 3000);
     return () => clearTimeout(t);
   }, [onNext]);
 
@@ -129,7 +128,7 @@ function Explain2({ onNext }: { onNext: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-        <div className="text-6xl mb-10">✨</div>
+        <div className="mb-10" />
         <h2 className="text-3xl font-serif text-white mb-6 leading-tight">
           Des routines<br />personnalisées
         </h2>
