@@ -3,7 +3,11 @@ import { Tag } from '../types';
 // ─── Morning journal questions by tag ────────────────────────────────────────
 export const MORNING_QUESTIONS: Record<Tag, string[]> = {
   'Présence': [
-    "Qu'est-ce que j'aurais besoin de m'autoriser à être?",
+    "Qu’est-ce que je n’ai plus besoin de chercher à être aujourd’hui ?",
+    "Qu'est-ce qui est vivant en moi, ici et maintenant ?",
+    "Si je me donnais la permission d'être pleinement moi, qu'est-ce qui changerait ?",
+    "De quoi aurais-je besoin pour pour me sentir plus en présence, pleinement moi-même?",
+    "Si j'avais pleinement confiance en moi et dans mes capacités, qu'est-ce que je ferais (que je ne fais peut-être pas encore) ?",
   ],
   'Sérénité': [
     "À partir de ce nouvel état de sérénité, comment est-ce que je vois ma journée?",
