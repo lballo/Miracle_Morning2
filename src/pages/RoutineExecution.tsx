@@ -228,7 +228,7 @@ export function RoutineExecution({ routine, tag, onComplete, onViewRoutines, onJ
           </button>
 
           <button
-            onClick={goNext}
+            onClick={() => goNext()}
             className="w-12 h-12 rounded-full bg-lavender/20 border border-lavender/30 text-lavender flex items-center justify-center hover:bg-lavender hover:text-midnight transition-all"
           >
             {isLast ? <Check size={20} /> : <ArrowRight size={20} />}
