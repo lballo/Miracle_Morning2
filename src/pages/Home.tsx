@@ -23,12 +23,16 @@ function Particles() {
 }
 
 // Écran de checkin — contenu en zone médiane/basse
-function CheckIn({ onNext, firstName }: { onNext: (mood: Mood) => void; firstName: string }) {
+function CheckIn({ onNext, firstName, gender }: { onNext: (mood: Mood) => void; firstName: string; gender: string | null }) {
   const now = new Date();
   const h = String(now.getHours()).padStart(2, '0'), m = String(now.getMinutes()).padStart(2, '0');
   const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  const moods: Mood[] = ['Reposée','Anxieuse','Enthousiaste','Fatiguée','Calme'];
+
+  const isMasc = gender === 'Homme';
+  const moods: Mood[] = isMasc
+    ? ['Reposé','Anxieux','Enthousiaste','Fatigué','Calme']
+    : ['Reposée','Anxieuse','Enthousiaste','Fatiguée','Calme'];
   return (
     <div className="flex flex-col min-h-full relative">
       <Particles />
@@ -175,7 +179,7 @@ export function Home({ onNavigate, onStartRoutine }: { onNavigate: (tab: string)
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
           className={isFullscreen ? 'absolute inset-0' : 'flex-1 h-full'}>
-          {step === 'checkin'           && <CheckIn onNext={handleMood} firstName={user.firstName} />}
+          {step === 'checkin'           && <CheckIn onNext={handleMood} firstName={user.firstName} gender={user.gender} />}
           {step === 'transition-mantra' && <TransitionMantra onNext={goNext} />}
           {step === 'needs'             && <Needs onNext={handleTag} onBack={goBack} />}
           {step === 'intention' && tag  && <IntentionScreen tag={tag} onNext={goNext} />}
