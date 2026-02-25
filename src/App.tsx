@@ -8,6 +8,7 @@ import { Routines } from './pages/Routines';
 import { Journal } from './pages/Journal';
 import { WakeUp } from './pages/WakeUp';
 import { Affirmations } from './pages/Affirmations';
+import { DEFAULT_ROUTINES } from './data/routines';
 import { Profile } from './pages/Profile';
 import { RoutineExecution } from './pages/RoutineExecution';
 import { Tag } from './types';
@@ -76,15 +77,16 @@ function AppInner() {
 
   if (!state.onboardingComplete) return <Onboarding />;
 
-  const activeRoutine = activeRoutineId ? state.routines.find(r => r.id === activeRoutineId) || null : null;
+  const allRoutines = [...DEFAULT_ROUTINES, ...state.routines];
+  const activeRoutine = activeRoutineId ? allRoutines.find(r => r.id === activeRoutineId) || null : null;
 
   const startRoutine = (tag: Tag) => {
-    const routine = state.routines.find(r => r.tag === tag);
+    const routine = allRoutines.find(r => r.tag === tag);
     if (routine) { setActiveRoutineId(routine.id); setRoutineTag(tag); }
   };
 
   const startRoutineById = (id: string) => {
-    const routine = state.routines.find(r => r.id === id);
+    const routine = allRoutines.find(r => r.id === id);
     if (routine) { setActiveRoutineId(id); setRoutineTag(routine.tag); }
   };
 
